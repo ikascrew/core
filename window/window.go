@@ -18,7 +18,9 @@ func New(name string) (*Window, error) {
 }
 
 func (w *Window) Play(v core.Video) error {
+
 	for {
+
 		img, err := v.Next()
 		if err != nil {
 			return nil
@@ -27,7 +29,8 @@ func (w *Window) Play(v core.Video) error {
 		if err != nil {
 			return nil
 		}
-		gocv.WaitKey(1)
+
+		gocv.WaitKey(img.Wait())
 	}
 	return nil
 }

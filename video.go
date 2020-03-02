@@ -6,15 +6,12 @@ import (
 
 type Video interface {
 	Next() (*gocv.Mat, error)
-	Set(int)
+	Wait() float64
 
+	Set(int)
 	Current() int
-	Size() int
+
 	Source() string
 
 	Release() error
-}
-
-type Effect interface {
-	Run(Video, Video) Video
 }
