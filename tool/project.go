@@ -12,8 +12,6 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/ikascrew/ikascrew"
-
 	"github.com/nfnt/resize"
 	"gopkg.in/cheggaaa/pb.v1"
 )
@@ -34,10 +32,11 @@ func CreateProject(id string) error {
 		return fmt.Errorf("Project id:%v", err)
 	}
 
-	err = ikascrew.Load(int64(p))
-	if err != nil {
-		return fmt.Errorf("Load Project:%v", err)
-	}
+	// TODO tidy ikascrw
+	//err = ikascrew.Load(int64(p))
+	//if err != nil {
+	//return fmt.Errorf("Load Project:%v", err)
+	//}
 
 	images := filepath.Join(GetClientDir(), IMAGE)
 	os.RemoveAll(images)
@@ -48,7 +47,8 @@ func CreateProject(id string) error {
 	}
 
 	//Configからコンテンツの一覧を取得
-	contents := ikascrew.Config.Contents
+	//TODO tidy ikascrew
+	contents := ""
 	bar := pb.StartNew(len(contents)).Prefix("Create Thumbnail")
 
 	for _, elm := range contents {
