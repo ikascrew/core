@@ -30,7 +30,7 @@ func (w *Window) Play(v core.Video) error {
 			return nil
 		}
 
-		gocv.WaitKey(img.Wait())
+		gocv.WaitKey(25)
 	}
 	return nil
 }
@@ -38,10 +38,6 @@ func (w *Window) Play(v core.Video) error {
 func (w *Window) Show(img *gocv.Mat) error {
 	w.owner.IMShow(*img)
 	return nil
-}
-
-func (w *Window) Wait() {
-	gocv.WaitKey(33)
 }
 
 func (w *Window) Close() {

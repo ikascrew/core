@@ -34,15 +34,35 @@ func main() {
 func run(args []string) error {
 
 	path := args[0]
+	var err error
+	var infos []os.FileInfo
 
-	files, err := ioutil.ReadDir(path)
+	info, err := os.Stat(path)
 	if err != nil {
-		return fmt.Errorf("ioutil.ReadDir(%s) :%w", path, err)
+		return err
 	}
 
-	for _, file := range files {
+	dir := info.IsDir()
+	if dir {
 
-		name := filepath.Join(path, file.Name())
+		infos, err = ioutil.ReadDir(path)
+		if err != nil {
+			return fmt.Errorf("ioutil.ReadDir(%s) :%w", path, err)
+		}
+
+	} else {
+		infos = make([]os.FileInfo, 1)
+		infos[0] = info
+	}
+
+	for _, file := range infos {
+
+		name := file.Name()
+
+		if dir {
+			name = filepath.Join(path, file.Name())
+		}
+
 		names := strings.Split(name, ".mp4")
 
 		if len(names) != 2 {

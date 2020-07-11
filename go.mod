@@ -8,7 +8,7 @@ require (
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b // indirect
 	github.com/ikascrew/go-opencv v0.0.0-20171108105817-beed5ac470ba // indirect
 	github.com/ikascrew/ikascrew v0.0.0-20170821023227-0c3f5d5cfc00
-	github.com/ikascrew/plugin v0.0.0-20200301081756-926044e825a1 // indirect
+	github.com/ikascrew/plugin v0.0.0-20200302102404-1d05022be573
 	github.com/ikascrew/powermate v0.0.0-20170724041315-7b09f8e1cf88 // indirect
 	github.com/mattn/go-runewidth v0.0.8 // indirect
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
