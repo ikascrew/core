@@ -10,10 +10,10 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
+	//"strconv"
 
 	"github.com/nfnt/resize"
-	"gopkg.in/cheggaaa/pb.v1"
+	//"gopkg.in/cheggaaa/pb.v1"
 )
 
 const CLIENT = ".client"
@@ -25,6 +25,7 @@ func GetClientDir() string {
 
 const Base = "http://10.0.0.1:5555/static/images/thumb/"
 
+/*
 func CreateProject(id string) error {
 
 	p, err := strconv.Atoi(id)
@@ -40,15 +41,19 @@ func CreateProject(id string) error {
 		return fmt.Errorf("Error make directory:%v", err)
 	}
 
-	//Configからコンテンツの一覧を取得
+	//TODO Configからコンテンツの一覧を取得
 	contents := ""
+
+    //TODO
+
+
 	bar := pb.StartNew(len(contents)).Prefix("Create Thumbnail")
 
 	for _, elm := range contents {
 
-		//content_id := elm.ContentID
+		content_id := elm.ContentID
 		//3つのファイルにアクセスして保存
-		//err = create(content_id)
+		err = create(content_id)
 		if err != nil {
 			return fmt.Errorf("Error Create :%s", err)
 		}
@@ -59,6 +64,7 @@ func CreateProject(id string) error {
 
 	return nil
 }
+*/
 
 func create(id int) error {
 
