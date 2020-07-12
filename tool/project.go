@@ -32,12 +32,6 @@ func CreateProject(id string) error {
 		return fmt.Errorf("Project id:%v", err)
 	}
 
-	// TODO tidy ikascrw
-	//err = ikascrew.Load(int64(p))
-	//if err != nil {
-	//return fmt.Errorf("Load Project:%v", err)
-	//}
-
 	images := filepath.Join(GetClientDir(), IMAGE)
 	os.RemoveAll(images)
 
@@ -47,15 +41,14 @@ func CreateProject(id string) error {
 	}
 
 	//Configからコンテンツの一覧を取得
-	//TODO tidy ikascrew
 	contents := ""
 	bar := pb.StartNew(len(contents)).Prefix("Create Thumbnail")
 
 	for _, elm := range contents {
 
-		content_id := elm.ContentID
+		//content_id := elm.ContentID
 		//3つのファイルにアクセスして保存
-		err = create(content_id)
+		//err = create(content_id)
 		if err != nil {
 			return fmt.Errorf("Error Create :%s", err)
 		}
