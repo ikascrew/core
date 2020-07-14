@@ -2,6 +2,7 @@ package tool
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"image"
 	"image/draw"
@@ -10,10 +11,13 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	//"strconv"
+	"strconv"
+
+	"github.com/ikascrew/ikasbox/handler"
 
 	"github.com/nfnt/resize"
-	//"gopkg.in/cheggaaa/pb.v1"
+	"golang.org/x/xerrors"
+	"gopkg.in/cheggaaa/pb.v1"
 )
 
 const CLIENT = ".client"
@@ -23,14 +27,17 @@ func GetClientDir() string {
 	return CLIENT
 }
 
-const Base = "http://10.0.0.1:5555/static/images/thumb/"
+const Ikasbox = "http://localhost:5555"
+const ListAPI = "/project/content/list/%d"
 
-/*
+//const Base = "http://10.0.0.1:5555/static/images/thumb/"
+const Base = Ikasbox + "/static/images/thumb/"
+
 func CreateProject(id string) error {
 
 	p, err := strconv.Atoi(id)
 	if err != nil {
-		return fmt.Errorf("Project id:%v", err)
+		return xerrors.Errorf("Project id: %w", err)
 	}
 
 	images := filepath.Join(GetClientDir(), IMAGE)
@@ -38,14 +45,14 @@ func CreateProject(id string) error {
 
 	err = Mkdir(images)
 	if err != nil {
-		return fmt.Errorf("Error make directory:%v", err)
+		return xerrors.Errorf("Error make directory: %w", err)
 	}
 
-	//TODO Configからコンテンツの一覧を取得
-	contents := ""
-
-    //TODO
-
+	url := fmt.Sprintf("%s%s", Ikasbox, fmt.Sprintf(ListAPI, p))
+	contents, err := getContentList(url)
+	if err != nil {
+		return xerrors.Errorf("Error get content list[%s]: %w", url, err)
+	}
 
 	bar := pb.StartNew(len(contents)).Prefix("Create Thumbnail")
 
@@ -55,7 +62,7 @@ func CreateProject(id string) error {
 		//3つのファイルにアクセスして保存
 		err = create(content_id)
 		if err != nil {
-			return fmt.Errorf("Error Create :%s", err)
+			return xerrors.Errorf("Error Create : %w", err)
 		}
 
 		bar.Increment()
@@ -64,7 +71,6 @@ func CreateProject(id string) error {
 
 	return nil
 }
-*/
 
 func create(id int) error {
 
@@ -73,7 +79,7 @@ func create(id int) error {
 
 	img, err := downloadImage(url)
 	if err != nil {
-		return err
+		return xerrors.Errorf("downloadImage : %w", err)
 	}
 
 	out := fmt.Sprintf(imageDir+"/%d.jpg", id)
@@ -82,21 +88,21 @@ func create(id int) error {
 
 	err = writeImage(new_image, out)
 	if err != nil {
-		return err
+		return xerrors.Errorf("writeImage : %w", err)
 	}
 
 	url = fmt.Sprintf(Base+"/%d_4.jpg", id)
 
 	img1, err := downloadImage(url)
 	if err != nil {
-		return err
+		return xerrors.Errorf("downloadImage : %w", err)
 	}
 
 	url = fmt.Sprintf(Base+"/%d_12.jpg", id)
 
 	img3, err := downloadImage(url)
 	if err != nil {
-		return err
+		return xerrors.Errorf("downloadImage : %w", err)
 	}
 
 	cut := 3
@@ -123,7 +129,7 @@ func create(id int) error {
 
 	err = writeImage(new_thumb, out)
 	if err != nil {
-		return err
+		return xerrors.Errorf("writeImage : %w", err)
 	}
 
 	//mat, err := gocv.ImageToMatRGB(thumb)
@@ -150,6 +156,27 @@ func downloadImage(url string) (image.Image, error) {
 
 	resp, err := http.Get(url)
 	if err != nil {
+		return nil, xerrors.Errorf("http get(%s): %w", url, err)
+	}
+	defer resp.Body.Close()
+
+	byt, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, xerrors.Errorf("read all(%s): %w", url, err)
+	}
+
+	img, err := jpeg.Decode(bytes.NewReader(byt))
+	if err != nil {
+		return nil, xerrors.Errorf("decode(%s) : %w", url, err)
+	}
+
+	return img, nil
+}
+
+func getContentList(url string) ([]*handler.ProjectContent, error) {
+
+	resp, err := http.Get(url)
+	if err != nil {
 		return nil, err
 	}
 
@@ -160,10 +187,11 @@ func downloadImage(url string) (image.Image, error) {
 		return nil, err
 	}
 
-	img, _, err := image.Decode(bytes.NewReader(byt))
+	dst := handler.ProjectResponse{}
+	err = json.Unmarshal(byt, &dst)
 	if err != nil {
 		return nil, err
 	}
 
-	return img, nil
+	return dst.Contents, nil
 }

@@ -24,7 +24,7 @@ func main() {
 	err := tool.CreateProject(project)
 
 	if err != nil {
-		log.Println(err)
+		log.Printf("%+v", err)
 		os.Exit(1)
 	}
 
