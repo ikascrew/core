@@ -38,7 +38,7 @@ func NewVideo(f string) (*Video, error) {
 		width = img.Cols()
 		height = img.Rows()
 		fps = 33.3
-		frames = 30
+		frames = 320
 		fourcc = 1.0
 	} else {
 
