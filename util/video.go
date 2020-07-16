@@ -3,12 +3,15 @@ package util
 import (
 	"bytes"
 	"fmt"
+	"strings"
 
 	"gocv.io/x/gocv"
 )
 
 type Video struct {
-	owner  *gocv.VideoCapture
+	owner *gocv.VideoCapture
+	image *gocv.Mat
+
 	name   string
 	Width  int
 	Height int
@@ -19,30 +22,67 @@ type Video struct {
 
 func NewVideo(f string) (*Video, error) {
 
-	cap, err := gocv.VideoCaptureFile(f)
-	if err != nil {
-		return nil, err
+	width := 0
+	height := 0
+	fps := 0.0
+	frames := 0.0
+	fourcc := 0.0
+
+	var owner *gocv.VideoCapture
+	var image *gocv.Mat
+
+	if isImage(f) {
+		img := gocv.IMRead(f, gocv.IMReadColor)
+
+		image = &img
+		width = img.Cols()
+		height = img.Rows()
+		fps = 33.3
+		frames = 30
+		fourcc = 1.0
+	} else {
+
+		cap, err := gocv.VideoCaptureFile(f)
+		if err != nil {
+			return nil, err
+		}
+
+		owner = cap
+
+		width = int(cap.Get(gocv.VideoCaptureFrameWidth))
+		height = int(cap.Get(gocv.VideoCaptureFrameHeight))
+		fps = cap.Get(gocv.VideoCaptureFPS)
+		frames = cap.Get(gocv.VideoCaptureFrameCount)
+		fourcc = cap.Get(gocv.VideoCaptureFOURCC)
 	}
 
-	width := cap.Get(gocv.VideoCaptureFrameWidth)
-	height := cap.Get(gocv.VideoCaptureFrameHeight)
-	fps := cap.Get(gocv.VideoCaptureFPS)
-	frames := cap.Get(gocv.VideoCaptureFrameCount)
-	fourcc := cap.Get(gocv.VideoCaptureFOURCC)
-
 	v := &Video{
-		owner:  cap,
+		owner:  owner,
+		image:  image,
 		name:   f,
-		Width:  int(width),
-		Height: int(height),
+		Width:  width,
+		Height: height,
 		FPS:    fps,
 		FOURCC: fourcc,
 		Frames: int(frames),
 	}
+
 	return v, nil
 }
 
+func isImage(f string) bool {
+
+	if strings.Index(f, ".png") ||
+		strings.Index(f, ".jpg") ||
+		strings.Index(f, ".jpeg") {
+		return true
+	}
+
+	return false
+}
+
 func (v *Video) Close() {
+
 	err := v.owner.Close()
 	if err != nil {
 		fmt.Println(err)
