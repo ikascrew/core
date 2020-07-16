@@ -83,16 +83,31 @@ func isImage(f string) bool {
 
 func (v *Video) Close() {
 
-	err := v.owner.Close()
-	if err != nil {
-		fmt.Println(err)
+	if v.image != nil {
+		err := v.image.Close()
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+
+	if v.owner != nil {
+		err := v.owner.Close()
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 }
 
 func (v *Video) GetImage(f float64) (*gocv.Mat, error) {
-	if v == nil || !v.owner.IsOpened() {
+
+	if v.image != nil {
+		return v.image, nil
+	}
+
+	if !v.owner.IsOpened() {
 		return nil, fmt.Errorf("Capture Open Error")
 	}
+
 	m := gocv.NewMat()
 	v.owner.Set(gocv.VideoCapturePosFrames, f)
 	v.owner.Read(&m)
