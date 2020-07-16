@@ -3,6 +3,7 @@ package multicast
 import (
 	"bytes"
 	"encoding/gob"
+	"log"
 	"net"
 	"time"
 
@@ -35,12 +36,20 @@ func (c *Client) Find() ([]*AccessInfo, error) {
 
 	add := createAddress(c.Port)
 
+	log.Println(add)
 	addr, err := net.ResolveUDPAddr("udp", add)
 	if err != nil {
 		return nil, xerrors.Errorf("resolve udp address[%s]: %w", add, err)
 	}
 
-	conn, err := net.ListenMulticastUDP("udp", nil, addr)
+	var in *net.Interface = nil
+	//log.Println("Listen " + add)
+	//in, err := net.InterfaceByName("イーサネット 2")
+	//if err != nil {
+	//return nil, xerrors.Errorf("not found[%s]: %w", add, err)
+	//}
+
+	conn, err := net.ListenMulticastUDP("udp", in, addr)
 	if err != nil {
 		return nil, xerrors.Errorf("listen multicast [%s]: %w", add, err)
 	}
@@ -82,7 +91,6 @@ func (c *Client) Find() ([]*AccessInfo, error) {
 		}
 
 		m.Address = remoteAddress.IP.String()
-
 		acs = append(acs, &m)
 	}
 
