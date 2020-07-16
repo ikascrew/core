@@ -72,9 +72,9 @@ func NewVideo(f string) (*Video, error) {
 
 func isImage(f string) bool {
 
-	if strings.Index(f, ".png") ||
-		strings.Index(f, ".jpg") ||
-		strings.Index(f, ".jpeg") {
+	if strings.Index(f, ".png") != -1 ||
+		strings.Index(f, ".jpg") != -1 ||
+		strings.Index(f, ".jpeg") != -1 {
 		return true
 	}
 
