@@ -3,6 +3,7 @@ package multicast
 import (
 	"bytes"
 	"encoding/gob"
+	"errors"
 	"log"
 	"net"
 	"time"
@@ -11,7 +12,8 @@ import (
 )
 
 type Client struct {
-	Port int
+	Port     int
+	Duration int
 }
 
 type ClientOption func(*Client) error
@@ -19,7 +21,22 @@ type ClientOption func(*Client) error
 func defaultClient() *Client {
 	c := Client{}
 	c.Port = DefaultUDPPort
+	c.Duration = 5
 	return &c
+}
+
+func ClientPort(p int) func(*Client) error {
+	return func(c *Client) error {
+		c.Port = p
+		return nil
+	}
+}
+
+func ClientDuration(d int) func(*Client) error {
+	return func(c *Client) error {
+		c.Duration = d
+		return nil
+	}
 }
 
 func NewClient(opts ...ClientOption) (*Client, error) {
@@ -43,11 +60,20 @@ func (c *Client) Find() ([]*AccessInfo, error) {
 	}
 
 	var in *net.Interface = nil
-	//log.Println("Listen " + add)
-	//in, err := net.InterfaceByName("イーサネット 2")
-	//if err != nil {
-	//return nil, xerrors.Errorf("not found[%s]: %w", add, err)
-	//}
+
+	/*
+		in, err = net.InterfaceByName("イーサネット 2")
+		if err != nil {
+			return nil, xerrors.Errorf("not found[%s]: %w", add, err)
+		}
+
+			interfaces, err := net.Interfaces()
+			for _, elm := range interfaces {
+				log.Println("Interface :" + elm.Name)
+				log.Printf("Index :%d\n", elm.Index)
+				log.Printf("MTU :%d\n", elm.MTU)
+			}
+	*/
 
 	conn, err := net.ListenMulticastUDP("udp", in, addr)
 	if err != nil {
@@ -58,8 +84,9 @@ func (c *Client) Find() ([]*AccessInfo, error) {
 	acs := make([]*AccessInfo, 0, 10)
 
 	start := time.Now()
-	dead := start.Add(time.Second * 11)
+	dead := start.Add(time.Second * time.Duration(c.Duration+1))
 	err = conn.SetDeadline(dead)
+
 	if err != nil {
 		return nil, xerrors.Errorf("set deadline: %w", err)
 	}
@@ -71,7 +98,8 @@ func (c *Client) Find() ([]*AccessInfo, error) {
 		length, remoteAddress, err := conn.ReadFromUDP(buffer)
 		if err != nil {
 
-			if opErr, ok := err.(*net.OpError); ok {
+			var opErr *net.OpError
+			if errors.As(err, &opErr) {
 				if opErr.Timeout() {
 					return acs, nil
 				}

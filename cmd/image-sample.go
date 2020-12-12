@@ -15,7 +15,7 @@ func main() {
 	args := flag.Args()
 
 	if len(args) <= 0 {
-		fmt.Println("arguments MP4 file")
+		fmt.Println("arguments image file")
 		os.Exit(1)
 	}
 

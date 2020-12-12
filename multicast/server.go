@@ -15,6 +15,7 @@ type Server struct {
 	Type      ServerType
 	UDPPort   int
 	UsingPort int
+	Duration  int
 }
 
 type ServerOption func(*Server) error
@@ -40,6 +41,13 @@ func Use(p int) ServerOption {
 	}
 }
 
+func Duration(d int) ServerOption {
+	return func(s *Server) error {
+		s.Duration = d
+		return nil
+	}
+}
+
 func Type(t ServerType) ServerOption {
 	return func(s *Server) error {
 		s.Type = t
@@ -59,6 +67,7 @@ func defaultServer() *Server {
 	s.UDPPort = DefaultUDPPort
 	s.Type = TypeIkascrew
 	s.UsingPort = DefaultServerPort
+	s.Duration = 5
 	return &s
 }
 
@@ -102,7 +111,8 @@ func (s *Server) Dial() error {
 		return xerrors.Errorf("MTU Size Error: %d", MTU)
 	}
 
-	ticker := time.Tick(10 * time.Second)
+	d := time.Duration(s.Duration) * time.Second
+	ticker := time.Tick(d)
 	for range ticker {
 		conn.Write(data)
 	}
