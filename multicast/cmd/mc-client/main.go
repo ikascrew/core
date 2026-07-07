@@ -18,5 +18,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	log.Println(m)
+	if len(m) == 0 {
+		log.Println("server not found")
+		return
+	}
+
+	for _, elm := range m {
+		log.Println(elm)
+	}
 }

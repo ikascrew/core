@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"encoding/gob"
 	"errors"
+	"fmt"
 	"log"
 	"net"
 	"time"
 
+	"golang.org/x/net/ipv4"
 	"golang.org/x/xerrors"
 )
 
@@ -54,34 +56,35 @@ func (c *Client) Find() ([]*AccessInfo, error) {
 	add := createAddress(c.Port)
 
 	log.Println(add)
-	addr, err := net.ResolveUDPAddr("udp", add)
+	addr, err := net.ResolveUDPAddr("udp4", add)
 	if err != nil {
 		return nil, xerrors.Errorf("resolve udp address[%s]: %w", add, err)
 	}
 
-	var in *net.Interface = nil
-
-	/*
-		in, err = net.InterfaceByName("イーサネット 2")
-		if err != nil {
-			return nil, xerrors.Errorf("not found[%s]: %w", add, err)
-		}
-
-			interfaces, err := net.Interfaces()
-			for _, elm := range interfaces {
-				log.Println("Interface :" + elm.Name)
-				log.Printf("Index :%d\n", elm.Index)
-				log.Printf("MTU :%d\n", elm.MTU)
-			}
-	*/
-
-	conn, err := net.ListenMulticastUDP("udp", in, addr)
+	// ListenMulticastUDP(nil) はデフォルトインターフェースにしか
+	// join しないため(Windows の複数NIC環境で受信できない原因)、
+	// マルチキャスト可能な全インターフェースへ追加で join する
+	conn, err := net.ListenMulticastUDP("udp4", nil, addr)
 	if err != nil {
 		return nil, xerrors.Errorf("listen multicast [%s]: %w", add, err)
 	}
 	defer conn.Close()
 
+	p := ipv4.NewPacketConn(conn)
+	group := &net.UDPAddr{IP: addr.IP}
+	if ifs, err := multicastInterfaces(); err == nil {
+		for i := range ifs {
+			// デフォルトインターフェースは join 済みでエラーになるが問題ない
+			p.JoinGroup(&ifs[i], group)
+		}
+	}
+	// 同一ホストのサーバーも発見できるようにループバックを有効化
+	if err := p.SetMulticastLoopback(true); err != nil {
+		log.Printf("set multicast loopback: %v", err)
+	}
+
 	acs := make([]*AccessInfo, 0, 10)
+	seen := make(map[string]bool)
 
 	start := time.Now()
 	dead := start.Add(time.Second * time.Duration(c.Duration+1))
@@ -119,8 +122,15 @@ func (c *Client) Find() ([]*AccessInfo, error) {
 		}
 
 		m.Address = remoteAddress.IP.String()
+
+		// 全インターフェースへ告知しているため同じサーバーから
+		// 複数回届く。同一の告知は捨てる
+		key := fmt.Sprintf("%s|%d|%s|%d", m.Name, m.Type, m.Address, m.Port)
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+
 		acs = append(acs, &m)
 	}
-
-	return acs, nil
 }

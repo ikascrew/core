@@ -7,6 +7,7 @@ import (
 	"net"
 	"time"
 
+	"golang.org/x/net/ipv4"
 	"golang.org/x/xerrors"
 )
 
@@ -84,14 +85,23 @@ func NewServer(opts ...ServerOption) (*Server, error) {
 
 func (s *Server) Dial() error {
 
-	ser := createAddress(s.UDPPort)
-	log.Printf("Dial %s[%s]", s.Name, ser)
+	group := &net.UDPAddr{IP: net.ParseIP(MulticastAddress), Port: s.UDPPort}
+	log.Printf("Announce %s[%s]", s.Name, group)
 
-	conn, err := net.Dial("udp", ser)
+	// net.Dial だと OS が選んだ1つのインターフェースからしか送信されず、
+	// 仮想アダプタが混在する環境で届かないことがあるため、
+	// 全インターフェースへ明示的に送信する
+	conn, err := net.ListenPacket("udp4", ":0")
 	if err != nil {
-		return xerrors.Errorf("UDP Dial: %w", err)
+		return xerrors.Errorf("UDP listen: %w", err)
 	}
 	defer conn.Close()
+
+	p := ipv4.NewPacketConn(conn)
+	// 同一ホスト上のクライアントにも届くようにループバックを有効化
+	if err := p.SetMulticastLoopback(true); err != nil {
+		log.Printf("set multicast loopback: %v", err)
+	}
 
 	msg := AccessInfo{}
 	msg.Name = s.Name
@@ -112,10 +122,32 @@ func (s *Server) Dial() error {
 	}
 
 	d := time.Duration(s.Duration) * time.Second
-	ticker := time.Tick(d)
-	for range ticker {
-		conn.Write(data)
+	for {
+		if err := announce(p, group, data); err != nil {
+			log.Printf("announce: %+v", err)
+		}
+		time.Sleep(d)
 	}
+}
 
+// announce はマルチキャスト可能な全インターフェースへ告知を1回ずつ送る
+func announce(p *ipv4.PacketConn, group *net.UDPAddr, data []byte) error {
+	ifs, err := multicastInterfaces()
+	if err != nil {
+		return err
+	}
+	sent := 0
+	for i := range ifs {
+		if err := p.SetMulticastInterface(&ifs[i]); err != nil {
+			continue
+		}
+		if _, err := p.WriteTo(data, nil, group); err != nil {
+			continue
+		}
+		sent++
+	}
+	if sent == 0 {
+		return xerrors.New("no interface could send multicast")
+	}
 	return nil
 }
