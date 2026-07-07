@@ -29,9 +29,12 @@ func sbytes(s string) []byte {
 	return *(*[]byte)(unsafe.Pointer(&s))
 }
 
+// stdin は共有の Scanner。呼び出しごとに新しい Scanner を作ると
+// 先読みバッファに残った行が捨てられ、パイプ/リダイレクト入力で
+// 2回目以降の Input が空になるため、パッケージで1つだけ持つ
+var stdin = bufio.NewScanner(os.Stdin)
+
 func Input() string {
-	std := bufio.NewScanner(os.Stdin)
-	std.Scan()
-	text := std.Text()
-	return text
+	stdin.Scan()
+	return stdin.Text()
 }
