@@ -1,8 +1,11 @@
+﻿//go:build ignore
+// go run cmd/play.go で個別に実行するサンプル
+
 package main
 
 import (
 	"github.com/ikascrew/core/window"
-	term "github.com/ikascrew/plugin/terminal"
+	term "github.com/ikascrew/plugin/video/terminal"
 )
 
 func main() {

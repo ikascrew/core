@@ -1,6 +1,3 @@
-﻿//go:build ignore
-// go run cmd/image-sample.go で個別に実行するサンプル
-
 package main
 
 import (
@@ -9,7 +6,7 @@ import (
 	"os"
 
 	"github.com/ikascrew/core/window"
-	"github.com/ikascrew/plugin/video/image"
+	"github.com/ikascrew/plugin/video/capture"
 )
 
 func main() {
@@ -18,11 +15,11 @@ func main() {
 	args := flag.Args()
 
 	if len(args) <= 0 {
-		fmt.Println("arguments image file")
+		fmt.Println("arguments MP4 file")
 		os.Exit(1)
 	}
 
-	v, err := image.New(args[0])
+	v, err := capture.New("0")
 	if err != nil {
 		panic(err)
 	}

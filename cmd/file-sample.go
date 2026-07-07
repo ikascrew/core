@@ -1,3 +1,6 @@
+﻿//go:build ignore
+// go run cmd/file-sample.go で個別に実行するサンプル
+
 package main
 
 import (
@@ -6,7 +9,7 @@ import (
 	"os"
 
 	"github.com/ikascrew/core/window"
-	"github.com/ikascrew/plugin/file"
+	"github.com/ikascrew/plugin/video/file"
 )
 
 func main() {
